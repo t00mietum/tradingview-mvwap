@@ -1,0 +1,96 @@
+//@version=6
+
+// Includes:
+//    - Moving Volume-Weighted Average Price line.
+//    - User-defined % band above and below, very useful for "breakout" signals,
+//      and mentally adjusting to the magnitude of price swings when viewing an
+//      automatic scale on the price axis.
+//    - Volume-Weighted Bollinger Bands, which are more sensitive to volume.
+// Description:
+//    - This is like TV's basic VWAP in concept, except the major flaw in that
+//      is that it has reset periods that you can't override, and the volume
+//      is cumulative until the next hard reset. The 'reset' is OK for securities
+//      trading, that resets every day anyway. But not for crypto - and not if/when
+//      securities trading goes 24/7. Also, the denominator accumulating over the
+//      entire period is also *not* OK, because then what is shown means something
+//      different as the day progresses - which kind of makes it useless. In other
+//      words, it starts out very sensitive to volume, and gets progressively
+//      more numb to it as they day progresses, and starts flattening out.
+//    - This fixes both problems, by using a user-definable moving window for the
+//      average. Essentially combining SMA with volume-weighting.
+//    - You may also find an invaluable trading aid, in the % bands above and below.
+//    - What can optionally be shown is standard deviation bands, aka Bollinger
+//      bands. The advantage over regular BB is that it's volume-weighted. Since
+//      it is already calculated on a moving average, the period for the standard
+//      deviation has been shortened by default, and the magnitude increased, to
+//      better approximate regular Bollinger Bands - but it's still more responsive
+//      to volume.
+//	Notes:
+//		- The shocking secret identity of t00mietum (aka TradingView's revered
+//		  "NeanderTraderBC") can be revealed with the correct key entered after
+//		  this Linux/WSL/Darwin command:
+//		    echo -n 'bdYkHbGhCRb82V_TrJ0uLoPemb2EG5pbMNhBkYhb4BI=' | basenc --base64url --decode | openssl enc -aes-256-cbc -d -pbkdf2 -nosalt
+//		- Alternately, the same process with 'f⍒Ê🝅ĜᛎỹqFẅ▿⍢Ŷ‡ʬẼᛏ🜣'
+
+// Copyright © 2025 t00mietum (aka TV "NeanderTraderBC"), ID: f⍒Ê🝅ĜᛎỹqFẅ▿⍢Ŷ‡ʬẼᛏ🜣.
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+
+// History:
+//		- 20250509
+//			- v1 Created.
+//			- v1 Fixed and improved.
+//			- v3 Major by-hand refactor.
+//			- v4 Bug fixes, clarity, and VWAP calc performance improvement with Gemeni vibe-coding (and hand-updates).
+
+const string ver="4.0.1"
+
+indicator(title="Moving Volume-Weighted Avg Price, % Channel, BBs v" + ver, shorttitle="MVWAP+", overlay=true, timeframe="", timeframe_gaps=true)
+
+// Inputs
+priceSource = input(ohlc4,  title="Source",                           group="CVWAP settings",                                                        display = display.data_window)
+windowLen   = input.int(23, title="VWAP Window Length (bars)",        group="CVWAP settings",   minval=1, maxval=5000,                               display = display.data_window)
+
+showBand1        = input(      true, title = "Show Percentage Bands", group = "Bands settings", inline = "band1",                                    display = display.data_window)
+percentBandMult1 = input.float(2.0,  title = "Percentage Points",     group = "Bands settings", inline = "band1", step = 0.25, minval=0,             display = display.data_window)
+
+showBand2       = input(      false, title = "Show StdDev Bands",     group = "Bands settings", inline = "band2",                                    display = display.data_window)
+stdDevBandMult1 = input.float(2.25,  title = "StdDev Multiplier",     group = "Bands settings", inline = "band2", step = 0.25, minval=0,             display = display.data_window)
+stdDevlen       = input.int(  17,    title = "StdDev Length",         group = "Bands settings", inline = "band2", step = 1,    minval=1, maxval=999, display = display.data_window)
+
+// Calculate continuous VWAP (don't use 'var' or it won't reset to 0 for every bar)
+float price_i = 0.0
+float vol_i = 0.0
+float sumPriceVolume = 0.0
+float sumVol = 0.0
+// Loop through the window, ensuring we don't go beyond available data.
+for i = 0 to math.min(windowLen - 1, bar_index)
+	// log.info("priceSource[{0}] = {1}\nvolume[{0}] = {2}", i, priceSource[i], volume[i])
+	price_i := priceSource[i]
+	vol_i   := volume[i]
+	if not na(price_i) and not na(vol_i)
+		sumPriceVolume += price_i * vol_i
+		sumVol         += vol_i
+//log.info("sumPriceVolume: {0}\nsumVol: {1}", sumPriceVolume, sumVol)
+vwapValue = (sumVol > 0) ? (sumPriceVolume / sumVol) : na
+
+// Fundamental calcs
+stdDev = ta.stdev(priceSource, stdDevlen)
+
+// Calculate bands based on either standard deviation or percentage
+upperBand_Percentage = vwapValue + ( vwapValue * (percentBandMult1/100) )
+lowerBand_Percentage = vwapValue - ( vwapValue * (percentBandMult1/100) )
+upperBand_StdDev     = vwapValue + ( stdDev    * stdDevBandMult1 )
+lowerBand_StdDev     = vwapValue - ( stdDev    * stdDevBandMult1 )
+
+// Main plot
+plot(vwapValue, title = "VWAP", color = color.yellow)
+
+// Percentage band
+upperBand1 = plot(showBand1 ? upperBand_Percentage : na, title="Upper Percentage Band", color = color.new(color.green, 50))
+lowerBand1 = plot(showBand1 ? lowerBand_Percentage : na, title="Lower Percentage Band", color = color.new(color.red,   50))
+fill(upperBand1, lowerBand1,                             title="Percentage Band Fill",  color = color.new(color.green, 95))
+
+// StdDev band
+upperBand2 = plot(showBand2 ? upperBand_StdDev : na, title="Upper StdDev Band", color = color.rgb(0,64,255, 60))
+lowerBand2 = plot(showBand2 ? lowerBand_StdDev : na, title="Lower StdDev Band", color = color.rgb(0,64,255, 60))
+fill(upperBand2, lowerBand2,                         title="StdDev Band Fill",  color = color.rgb(0,255,255, 96))
