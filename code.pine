@@ -32,7 +32,7 @@
 //		    echo -n 'bdYkHbGhCRb82V_TrJ0uLoPemb2EG5pbMNhBkYhb4BI=' | basenc --base64url --decode | openssl enc -aes-256-cbc -d -pbkdf2 -nosalt
 //		- Alternately, the same process with 'f⍒Ê🝅ĜᛎỹqFẅ▿⍢Ŷ‡ʬẼᛏ🜣'
 
-// Copyright © 2025 t00mietum (aka TV "NeanderTraderBC"), ID: f⍒Ê🝅ĜᛎỹqFẅ▿⍢Ŷ‡ʬẼᛏ🜣.
+// Copyright © 2025 t00mietum (CryptogID: ปʬϝღถɔ4რఠΔթะ9ƾǝu) (aka TV "NeanderTraderBC").
 // This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 
 // History:

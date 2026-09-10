@@ -57,7 +57,7 @@ Find it online [here](https://www.tradingview.com/v/YGq2eMZN/), favorite it, the
 
 ## Copyright and license
 
-> Copyright © 2025-26 t00mietum (aka TradingView's "NeanderTraderBC"), ID: `f⍒Ê🝅ĜᛎỹqFẅ▿⍢Ŷ‡ʬẼᛏ🜣`<br />
+> Copyright © 2025-26 t00mietum (CryptogID: ปʬϝღถɔ4რఠΔթะ9ƾǝu) (aka TradingView's "NeanderTraderBC")<br />
 > Licensed under the [Mozilla Public License 2.0](https://mozilla.org/MPL/2.0/). No warranty.
 <!--
 > Licensed under the [MIT License](https://mit-license.org/). No warranty.
